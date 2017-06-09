@@ -1,0 +1,66 @@
+#:kivy 1.10.0
+
+<HomeScreen>
+    RelativeLayout:
+        orientation: 'vertical'
+        canvas.before:
+            Color:
+                rgba: 0, 1, 0, 1
+            Rectangle:
+                # self here refers to the widget i.e BoxLayout
+                pos: self.pos
+                size: self.size
+        Label:
+            text: 'Photobooth'
+            pos_hint: { 'center_x': 0.5, 'center_y': 0.75}
+            font_size: 100
+        Button:
+            id: startButton
+            text: 'Start'
+            size_hint: 0.5, 0.2
+            pos_hint: { 'center_x': 0.5, 'center_y': 0.20 }
+            height: "40dp"
+            on_press: root.manager.current = 'picture'
+
+<PictureScreen>
+    infoPopup: infoPopup.__self__
+    on_enter: root.infoPopup.open()
+    BoxLayout:
+        id: bl
+        orientation: "vertical"
+        Popup:
+            id: infoPopup
+            title: "Information"
+            size_hint: 0.5, 0.5
+            on_parent:
+                if self.parent == bl: self.parent.remove_widget(self)
+            BoxLayout:
+                id: content_box
+                orientation: "vertical"
+                ScrollView:
+                    Label:
+                        id: content_text
+                        text_size: self.width, None
+                        height: self.texture_size[1]
+                        text: "Text goes here"
+                        valign: 'center'
+                        halign: 'center'
+                Button:
+                    id: ok
+                    text: "OK"
+                    size_hint_y: None
+                    height: "40dp"
+                    on_release:
+                        infoPopup.dismiss()
+                        number.text = '5'
+        RelativeLayout:
+            Camera:
+                id: camera
+                play: True
+                resolution: 2000,2000
+            Label:
+                id: number
+                text: ''
+                font_size: 150
+                pos_hint: { 'center_x': 0.5, 'center_y': 0.5 }
+
