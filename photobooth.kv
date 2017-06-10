@@ -1,0 +1,108 @@
+#:kivy 1.10.0
+
+<HomeScreen>
+    RelativeLayout:
+        orientation: 'vertical'
+        canvas.before:
+            Color:
+                rgba: 0, 1, 0, 1
+            Rectangle:
+                # self here refers to the widget i.e BoxLayout
+                pos: self.pos
+                size: self.size
+        Label:
+            text: 'Photobooth'
+            pos_hint: { 'center_x': 0.5, 'center_y': 0.75}
+            font_size: 100
+        Button:
+            id: startButton
+            text: 'Start'
+            size_hint: 0.5, 0.2
+            pos_hint: { 'center_x': 0.5, 'center_y': 0.2 }
+            height: "40dp"
+            on_press: root.manager.current = 'picture'
+
+<PictureScreen>
+    infoPopup: infoPopup.__self__
+    on_enter: root.infoPopup.open()
+    BoxLayout:
+        id: bl
+        orientation: "vertical"
+        Popup:
+            id: infoPopup
+            title: "Information"
+            size_hint: 0.5, 0.5
+            on_parent:
+                if self.parent == bl: self.parent.remove_widget(self)
+            BoxLayout:
+                id: content_box
+                orientation: "vertical"
+                ScrollView:
+                    Label:
+                        id: content_text
+                        text_size: self.width, None
+                        height: self.texture_size[1]
+                        text: "Text goes here"
+                        valign: 'center'
+                        halign: 'center'
+                Button:
+                    id: ok
+                    text: "OK"
+                    size_hint_y: None
+                    height: "40dp"
+                    on_release:
+                        infoPopup.dismiss()
+                        number.text = '5'
+                        countdown_event = root.schedule_countdown()
+        RelativeLayout:
+            Camera:
+                id: camera
+                play: True
+                resolution: 2000,2000
+            Label:
+                id: number
+                text: ''
+                font_size: 150
+                pos_hint: { 'center_x': 0.5, 'center_y': 0.5 }
+
+<PrintScreen>
+    on_enter: root.generate_collage()
+    BoxLayout:
+        RelativeLayout:
+            Label:
+                id: copies_text
+                text: "Select the number of copies to be printed."
+                pos_hint: { 'center_x': 0.5, 'center_y': 0.8 }
+                text_size: self.width, None
+                height: self.texture_size[1]
+                valign: 'center'
+                halign: 'center'
+            Label:
+                id: slider_text
+                text: str(int(slider_id.value))
+                pos_hint: { 'center_x': 0.5, 'center_y': 0.7 }
+                text_size: self.width, None
+                height: self.texture_size[1]
+                valign: 'center'
+                halign: 'center'
+            Slider:
+                id: slider_id
+                min: 0
+                max: 5
+                step: 1
+                value_track: True
+                value_track_color: [0, 1, 0, 1]
+                pos_hint: { 'center_x': 0.5, 'center_y': 0.65 }
+                size_hint_x: 0.5
+            Button:
+                id: print_button
+                text: "Print"
+                pos_hint: { 'center_x': 0.5, 'center_y': 0.4 }
+                size_hint: 0.5, 0.1
+            Button:
+                id: email_button
+                text: "Email Only"
+                pos_hint: { 'center_x': 0.5, 'center_y': 0.25 }
+                size_hint: 0.5, 0.1
+        Image:
+            id: preview
