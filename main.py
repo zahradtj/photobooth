@@ -1,6 +1,9 @@
 import kivy
+from kivy._clock import ClockEvent
+from kivy._event import partial
 
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition
 
 kivy.require('1.10.0')  # replace with your current kivy version !
@@ -15,22 +18,22 @@ class PreviewScreen(Screen):
 
 
 class PictureScreen(Screen):
-    pass
+    event = None
+
+    def countdown(self, dt):
+        current = int(self.ids['number'].text)
+        current -= 1
+        if current == 0:
+            self.ids['number'].text = ""
+            self.event.cancel()
+            return
+        self.ids['number'].text = str(current)
+
+    def schedule_countdown(self):
+        self.event = Clock.schedule_interval(partial(self.countdown), 1)
 
 
 class CountdownScreen(Screen):
-    # def countdown(self, dt):
-    #     current = int(self.ids['number'].text)
-    #     current -= 1
-    #     self.ids['number'].text = str(current)
-    #     if current == 0:
-    #         return
-    #         # sm.transition = NoTransition()
-    #         # self.ids['number'].text = str(5)
-    #         # sm.current = 'countdown'
-    #
-    # def schedule_countdown(self):
-    #     Clock.schedule_interval(partial(self.countdown), 1)
     pass
 
 
