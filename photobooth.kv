@@ -128,10 +128,46 @@
         on_release:
             root.delete(root.value)
 
+<ConfirmPopup>:
+    cols:1
+	Label:
+		text: root.text
+	GridLayout:
+		cols: 2
+		size_hint_y: None
+		height: '44sp'
+		Button:
+			text: 'Yes'
+			on_release: root.dispatch('on_answer','yes')
+		Button:
+			text: 'No'
+			on_release: root.dispatch('on_answer', 'no')
+
 <EmailScreen>:
     BoxLayout:
-        BoxLayout:
+        RelativeLayout:
             size_hint_x: 0.5
+            Label:
+                pos_hint: {'center_x': 0.5, 'center_y': 0.75}
+                size_hint_y: 0.9
+                valign: 'top'
+                halign: 'center'
+                text: "Please add email addresses.\nWhen done press Send.\n\nSkip sending emails by pressing Skip."
+            BoxLayout:
+                size_hint_y: 0.1
+                valign: 'bottom'
+                Button:
+                    id: send_email
+                    text: "Send"
+                    size_hint_x: 0.5
+                    on_release:
+                        root.send()
+                Button:
+                    id: skip_email
+                    text: "Skip"
+                    size_hint_x: 0.5
+                    on_release:
+                        root.skip()
         BoxLayout:
             id: email_bl
             size_hint_x: 0.5
