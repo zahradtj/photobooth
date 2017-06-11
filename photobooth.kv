@@ -32,6 +32,7 @@
             id: infoPopup
             title: "Information"
             size_hint: 0.5, 0.5
+            auto_dismiss: False
             on_parent:
                 if self.parent == bl: self.parent.remove_widget(self)
             BoxLayout:
@@ -66,6 +67,7 @@
                 pos_hint: { 'center_x': 0.5, 'center_y': 0.5 }
 
 <PrintScreen>
+    on_pre_enter: root.generate_collage()
     BoxLayout:
         RelativeLayout:
             Label:
@@ -107,7 +109,6 @@
                     root.manager.current = 'email'
         Image:
             id: preview
-            source: root.get_collage()
 
 <EmailRow>:
     padding: dp(8)

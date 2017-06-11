@@ -57,12 +57,13 @@ class PictureScreen(Screen):
             self.event = Clock.schedule_interval(partial(self.countdown), 1)
         else:
             camera.play = False
-            self.generate_collage()
             sm.current = 'print'
             print("print")
 
-    @staticmethod
-    def generate_collage():
+
+class PrintScreen(Screen):
+    def generate_collage(self):
+        image = self.ids['preview']
         images = map(Image.open, photos)
         widths, heights = zip(*(i.size for i in images))
 
@@ -78,14 +79,7 @@ class PictureScreen(Screen):
         start_time = photos[0].split("_")[1]
         collage_name = "IMG_{}_collage.png".format(start_time)
         new_im.save(collage_name)
-
-
-class PrintScreen(Screen):
-    def get_collage(self):
-        image = self.ids['preview']
-        start_time = photos[0].split("_")[1]
-        collage_name = "IMG_{}_collage.png".format(start_time)
-        return collage_name
+        image.source = collage_name
 
 
 class EmailScreen(Screen):
