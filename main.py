@@ -7,6 +7,7 @@ import re
 from PIL import Image
 from kivy.app import App
 from kivy.clock import Clock
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition
 
 kivy.require('1.10.0')
@@ -48,7 +49,7 @@ class PictureScreen(Screen):
         camera.export_to_png(photo_name)
 
         photos.append(photo_name)
-        print photos
+        print(photos)
         print("capture {}".format(len(photos)))
         if len(photos) < number_pictures:
             self.ids['number'].text = "5"
@@ -84,7 +85,14 @@ class PrintScreen(Screen):
 class EmailScreen(Screen):
     def insert(self, value):
         email = re.compile("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
-        if email.match(value):
+
+        found = False
+        for i in self.ids['rv'].data:
+            if i['value'] == value:
+                found = True
+                break
+
+        if email.match(value) and not found:
             self.ids['rv'].data.insert(0, {'value': value})
 
     def test_email(self, value):
@@ -96,8 +104,13 @@ class EmailScreen(Screen):
             self.ids['email_input'].background_color = [1,0.9,0.9,1]
             self.ids['add_email'].disabled = True
 
+
+class EmailRow(BoxLayout):
     def delete(self, value):
-        self.ids['rv'].data.remove(value)
+        entries = self.parent.parent.data
+        for i in entries:
+            if i['value'] == value:
+                entries.remove(i)
 
 
 class PhotoBoothApp(App):

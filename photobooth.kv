@@ -109,7 +109,7 @@
         Image:
             id: preview
 
-<Row@BoxLayout>:
+<EmailRow>:
     padding: dp(8)
     canvas.before:
         Color:
@@ -124,49 +124,54 @@
         id: remove
         text: "Remove"
         size_hint_x: 0.25
-        on_release: root.delete(email_input.text)
+        on_release:
+            root.delete(root.value)
 
 <EmailScreen>:
     BoxLayout:
-        id: email_bl
-        canvas:
-            Color:
-                rgba: 0.3, 0.3, 0.3, 1
-            Rectangle:
-                size: self.size
-                pos: self.pos
-        rv: rv
-        orientation: 'vertical'
-        GridLayout:
-            cols: 3
-            rows: 2
-            size_hint_y: None
-            height: dp(55)
-            padding: dp(8)
-            BoxLayout:
-                spacing: dp(8)
-                TextInput:
-                    id: email_input
-                    hint_text: 'Enter email'
-                    padding: dp(10), dp(10), 0, 0
-                    multiline: False
-                    on_text: root.test_email(email_input.text)
-                Button:
-                    id: add_email
-                    text: 'Add'
-                    size_hint_x: 0.25
-                    on_release: root.insert(email_input.text)
-
-        RecycleView:
-            id: rv
-            scroll_type: ['bars', 'content']
-            scroll_wheel_distance: dp(114)
-            bar_width: dp(10)
-            viewclass: 'Row'
-            RecycleBoxLayout:
-                default_size: None, dp(56)
-                default_size_hint: 1, None
+        BoxLayout:
+            size_hint_x: 0.5
+        BoxLayout:
+            id: email_bl
+            size_hint_x: 0.5
+            canvas:
+                Color:
+                    rgba: 0.3, 0.3, 0.3, 1
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+            rv: rv
+            orientation: 'vertical'
+            GridLayout:
+                cols: 3
+                rows: 2
                 size_hint_y: None
-                height: self.minimum_height
-                orientation: 'vertical'
-                spacing: dp(2)
+                height: dp(55)
+                padding: dp(8)
+                BoxLayout:
+                    spacing: dp(8)
+                    TextInput:
+                        id: email_input
+                        hint_text: 'Enter email'
+                        padding: dp(10), dp(10), 0, 0
+                        multiline: False
+                        on_text: root.test_email(email_input.text)
+                    Button:
+                        id: add_email
+                        text: 'Add'
+                        size_hint_x: 0.25
+                        on_release: root.insert(email_input.text)
+
+            RecycleView:
+                id: rv
+                scroll_type: ['bars', 'content']
+                scroll_wheel_distance: dp(114)
+                bar_width: dp(10)
+                viewclass: 'EmailRow'
+                RecycleBoxLayout:
+                    default_size: None, dp(56)
+                    default_size_hint: 1, None
+                    size_hint_y: None
+                    height: self.minimum_height
+                    orientation: 'vertical'
+                    spacing: dp(2)
