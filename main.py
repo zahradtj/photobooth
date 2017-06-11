@@ -2,6 +2,7 @@ from functools import partial
 
 import kivy
 import time
+import re
 
 from PIL import Image
 from kivy.app import App
@@ -80,12 +81,32 @@ class PrintScreen(Screen):
         image.source = collage_name
 
 
+class EmailScreen(Screen):
+    def insert(self, value):
+        email = re.compile("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
+        if email.match(value):
+            self.ids['rv'].data.insert(0, {'value': value})
+
+    def test_email(self, value):
+        email = re.compile("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
+        if email.match(value):
+            self.ids['email_input'].background_color = [0.9,1,0.9,1]
+            self.ids['add_email'].disabled = False
+        else:
+            self.ids['email_input'].background_color = [1,0.9,0.9,1]
+            self.ids['add_email'].disabled = True
+
+    def delete(self, value):
+        self.ids['rv'].data.remove(value)
+
+
 class PhotoBoothApp(App):
 
     def build(self):
         sm.add_widget(HomeScreen(name='home', transition=NoTransition()))
         sm.add_widget(PictureScreen(name='picture', transition=NoTransition()))
         sm.add_widget(PrintScreen(name='print', transition=NoTransition()))
+        sm.add_widget(EmailScreen(name='email', transition=NoTransition()))
         return sm
 
 
