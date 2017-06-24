@@ -100,6 +100,8 @@
                 text: "Print"
                 pos_hint: { 'center_x': 0.5, 'center_y': 0.4 }
                 size_hint: 0.5, 0.1
+                on_release:
+                    root.scale_print_collage()
             Button:
                 id: email_button
                 text: "Email Only"

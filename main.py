@@ -4,6 +4,7 @@ import kivy
 import time
 import re
 
+from Adafruit_Thermal import Adafruit_Thermal
 from PIL import Image
 from kivy.app import App
 from kivy.clock import Clock
@@ -19,6 +20,9 @@ kivy.require('1.10.0')
 sm = ScreenManager(transition=NoTransition())
 number_pictures = 3
 photos = []
+base_width = 384
+
+printer = Adafruit_Thermal('/dev/ttyAMA0', 9600, timeout=5)
 
 
 class HomeScreen(Screen):
@@ -52,7 +56,7 @@ class PictureScreen(Screen):
         camera.export_to_png(photo_name)
 
         photos.append(photo_name)
-        print photos
+        print(photos)
         print("capture {}".format(len(photos)))
         if len(photos) < number_pictures:
             self.ids['number'].text = "5"
@@ -65,6 +69,8 @@ class PictureScreen(Screen):
 
 
 class PrintScreen(Screen):
+    print_picture = None
+
     def generate_collage(self):
         image = self.ids['preview']
         images = map(Image.open, photos)
@@ -83,6 +89,28 @@ class PrintScreen(Screen):
         collage_name = "IMG_{}_collage.png".format(start_time)
         new_im.save(collage_name)
         image.source = collage_name
+
+    def scale_print_collage(self):
+        image = self.ids['preview']
+        collage_picture = Image.open(image.source)
+
+        width_percent = (base_width / float(collage_picture.size[0]))
+        height_size = int((float(collage_picture.size[1]) * float(width_percent)))
+        self.print_picture = collage_picture.resize((base_width, height_size), Image.ANTIALIAS)
+
+        # Save print file
+        print_filename = "IMG_{}_print.png".format(photos[0].split("_")[1])
+        self.print_picture.save(print_filename)
+
+        self.print_collage()
+
+    def print_collage(self):
+        printer.begin(90)  # Warmup time
+        printer.setTimes(40000, 3000)  # Set print and feed times
+        printer.justify('C')  # Center alignment
+        printer.feed(1)  # Add a blank line
+        printer.printImage(self.print_picture, True)  # Specify image to print
+        printer.feed(3)  # Add a few blank lines
 
 
 class ConfirmPopup(GridLayout):
