@@ -16,20 +16,24 @@ from kivy.clock import Clock
 from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition
+from kivy.uix.settings import SettingsWithTabbedPanel
+
+from settingsjson import settings_json
+from settings import SettingPassword, SettingFileChooser
 
 kivy.require('1.10.0')
 
-
+settings_config = configparser.ConfigParser()
 sm = ScreenManager(transition=NoTransition())
-number_pictures = 3
 photos = []
 base_width = 384
-settings = configparser.ConfigParser()
 
 # printer = Adafruit_Thermal('/dev/ttyUSB0', 9600, timeout=5) # Linux
 # printer = Adafruit_Thermal('COM5', 9600, timeout=5) # Windows
+
 
 class HomeScreen(Screen):
     pass
@@ -64,6 +68,10 @@ class PictureScreen(Screen):
         photos.append(photo_name)
         print(photos)
         print("capture {}".format(len(photos)))
+
+        settings_config.read('photobooth.ini')
+        number_pictures = int(settings_config.get('photos', 'max'))
+
         if len(photos) < number_pictures:
             self.ids['number'].text = "5"
             self.countdown_value = 5
@@ -71,7 +79,16 @@ class PictureScreen(Screen):
         else:
             self.countdown_value = 5
             sm.current = 'print'
-            print("print")
+
+    def info_popup_text(self):
+        settings_config.read('photobooth.ini')
+        event_name = settings_config.get('event', 'title')
+        number_pictures = settings_config.get('photos', 'max')
+        info_text = "Welcome to the {}!\n" \
+                    "There will be a 5 second countdown\nbefore each picture.\n" \
+                    "A total of {} picture(s) will be taken.\nEnjoy!".format(event_name, number_pictures)
+        popup_text = self.ids['info_popup_text']
+        popup_text.text = info_text
 
 
 class PrintScreen(Screen):
@@ -85,16 +102,25 @@ class PrintScreen(Screen):
         total_height = sum(heights)
         max_width = max(widths)
 
-        new_im = Image.new('RGB', (max_width, total_height))
-        y_offset = 0
+        settings_config.read('photobooth.ini')
+        selected_header = settings_config.get('photos', 'selected_header')
+        banner_image = Image.open(selected_header)
+        banner_image = banner_image.resize((max_width, banner_image.height), Image.ANTIALIAS)
+
+        collage = Image.new('RGB', (max_width, total_height+banner_image.height), Image.ANTIALIAS)
+        collage.paste(banner_image, (0, 0))
+        y_offset = banner_image.height
         for im in images:
-            new_im.paste(im, (0, y_offset))
+            collage.paste(im, (0, y_offset))
             y_offset += im.size[1]
 
         start_time = photos[0].split("_")[1]
         collage_name = "IMG_{}_collage.png".format(start_time)
-        new_im.save(collage_name)
+        collage.save(collage_name)
         image.source = collage_name
+
+        slider = self.ids['slider_id']
+        slider.max = self.get_print_number()
 
     def scale_print_collage(self):
         image = self.ids['preview']
@@ -108,7 +134,8 @@ class PrintScreen(Screen):
         print_filename = "IMG_{}_print.png".format(photos[0].split("_")[1])
         self.print_picture.save(print_filename)
 
-        self.print_collage()
+        for i in range(self.get_print_number()):
+            self.print_collage()
 
     def print_collage(self):
         # printer.begin(90)  # Warmup time
@@ -118,6 +145,11 @@ class PrintScreen(Screen):
         # printer.printImage(self.print_picture, True)  # Specify image to print
         # printer.feed(3)  # Add a few blank lines
         pass
+
+    def get_print_number(self):
+        settings_config.read('photobooth.ini')
+        number_prints = int(settings_config.get('prints', 'max'))
+        return number_prints
 
 
 class ConfirmPopup(GridLayout):
@@ -163,17 +195,17 @@ class EmailScreen(Screen):
                 emails += ","
             index += 1
 
-        settings.read('settings.ini')
-        username = settings.get('email', 'username')
-        password = settings.get('email', 'password')
+        settings_config.read('photobooth.ini')
+        username = settings_config.get('email', 'username')
+        password = settings_config.get('email', 'password')
 
         msg = MIMEMultipart()
         msg['From'] = username
         msg['To'] = emails
         # msg['Date'] = formatdate(localtime=True)
-        msg['Subject'] = settings.get('email', 'subject')
+        msg['Subject'] = settings_config.get('email', 'subject')
 
-        msg.attach(MIMEText(settings.get('email', 'body')))
+        msg.attach(MIMEText(settings_config.get('email', 'body')))
 
         collage = "IMG_{}_collage.png".format(start_time)
         with open(collage, "rb") as fil:
@@ -237,13 +269,32 @@ class EmailRow(BoxLayout):
 
 
 class PhotoBoothApp(App):
-
     def build(self):
         sm.add_widget(HomeScreen(name='home', transition=NoTransition()))
         sm.add_widget(PictureScreen(name='picture', transition=NoTransition()))
         sm.add_widget(PrintScreen(name='print', transition=NoTransition()))
         sm.add_widget(EmailScreen(name='email', transition=NoTransition()))
+
+        self.settings_cls = SettingsWithTabbedPanel
         return sm
+
+    def build_config(self, config):
+        config.read('photobooth.ini')
+        # config.setdefaults('email', {'password': ''})
+        # config.setdefaults('example', {
+        #     'boolexample': True,
+        #     'numericexample': 10,
+        #     'optionsexample': 'option2',
+        #     'stringexample': 'some_string',
+        #     'pathexample': '/some/path'})
+
+    def build_settings(self, settings):
+        settings.register_type('password', SettingPassword)
+        settings.register_type('filepath', SettingFileChooser)
+        settings.add_json_panel('Photobooth', self.config, data=settings_json)
+
+    def on_config_change(self, config, section, key, value):
+        print(config, section, key, value)
 
 
 if __name__ == '__main__':

@@ -21,10 +21,19 @@
             pos_hint: { 'center_x': 0.5, 'center_y': 0.2 }
             height: "40dp"
             on_press: root.manager.current = 'picture'
+        Button:
+            id: settings
+            text: 'Settings'
+            size_hint: 0.5, 0.2
+            pos_hint: { 'center_x': 0.5, 'center_y': 0.5 }
+            height: "40dp"
+            on_press: app.open_settings()
 
 <PictureScreen>
     infoPopup: infoPopup.__self__
-    on_enter: root.infoPopup.open()
+    on_enter:
+        root.info_popup_text()
+        root.infoPopup.open()
     BoxLayout:
         id: bl
         orientation: "vertical"
@@ -39,8 +48,9 @@
                 id: content_box
                 orientation: "vertical"
                 ScrollView:
+                    id: scroll_view
                     Label:
-                        id: content_text
+                        id: info_popup_text
                         text_size: self.width, None
                         height: self.texture_size[1]
                         text: "Text goes here"
@@ -214,3 +224,14 @@
                     height: self.minimum_height
                     orientation: 'vertical'
                     spacing: dp(2)
+
+<SettingPassword>:
+	PasswordLabel:
+		text: '(set)' if root.value else '(unset)'
+		pos: root.pos
+		font_size: '15sp'
+
+<SettingFileChooser>:
+    HeaderLabel:
+        id: header_label
+        text: self.set_label() if root.value else self.set_label()
