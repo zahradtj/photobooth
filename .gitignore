@@ -4,3 +4,4 @@
 *.jpeg
 photobooth.ini
 *.pyc
+!headers/default_banner.png

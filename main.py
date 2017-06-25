@@ -280,13 +280,6 @@ class PhotoBoothApp(App):
 
     def build_config(self, config):
         config.read('photobooth.ini')
-        # config.setdefaults('email', {'password': ''})
-        # config.setdefaults('example', {
-        #     'boolexample': True,
-        #     'numericexample': 10,
-        #     'optionsexample': 'option2',
-        #     'stringexample': 'some_string',
-        #     'pathexample': '/some/path'})
 
     def build_settings(self, settings):
         settings.register_type('password', SettingPassword)
