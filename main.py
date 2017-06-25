@@ -1,10 +1,15 @@
-from functools import partial
-
+import configparser as configparser
 import kivy
 import time
 import re
+import smtplib
+import traceback
 
 from Adafruit_Thermal import Adafruit_Thermal
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from functools import partial
 from PIL import Image
 from kivy.app import App
 from kivy.clock import Clock
@@ -21,9 +26,10 @@ sm = ScreenManager(transition=NoTransition())
 number_pictures = 3
 photos = []
 base_width = 384
+settings = configparser.ConfigParser()
 
-printer = Adafruit_Thermal('/dev/ttyAMA0', 9600, timeout=5)
-
+# printer = Adafruit_Thermal('/dev/ttyUSB0', 9600, timeout=5) # Linux
+# printer = Adafruit_Thermal('COM5', 9600, timeout=5) # Windows
 
 class HomeScreen(Screen):
     pass
@@ -105,12 +111,13 @@ class PrintScreen(Screen):
         self.print_collage()
 
     def print_collage(self):
-        printer.begin(90)  # Warmup time
-        printer.setTimes(40000, 3000)  # Set print and feed times
-        printer.justify('C')  # Center alignment
-        printer.feed(1)  # Add a blank line
-        printer.printImage(self.print_picture, True)  # Specify image to print
-        printer.feed(3)  # Add a few blank lines
+        # printer.begin(90)  # Warmup time
+        # printer.setTimes(40000, 3000)  # Set print and feed times
+        # printer.justify('C')  # Center alignment
+        # printer.feed(1)  # Add a blank line
+        # printer.printImage(self.print_picture, True)  # Specify image to print
+        # printer.feed(3)  # Add a few blank lines
+        pass
 
 
 class ConfirmPopup(GridLayout):
@@ -145,20 +152,57 @@ class EmailScreen(Screen):
             self.ids['email_input'].background_color = [1,0.9,0.9,1]
             self.ids['add_email'].disabled = True
 
-    def send(self):
+    def build_email(self):
         start_time = photos[0].split("_")[1]
-        email_file_name = "EMAILS_{}.txt".format(start_time)
 
         emails = ''
         index = 1
         for email in self.ids['rv'].data:
             emails += email['value']
             if not index == len(self.ids['rv'].data):
-                emails += ";"
+                emails += ","
             index += 1
 
-        with open(email_file_name, "w") as output:
-            output.write(str(emails))
+        settings.read('settings.ini')
+        username = settings.get('email', 'username')
+        password = settings.get('email', 'password')
+
+        msg = MIMEMultipart()
+        msg['From'] = username
+        msg['To'] = emails
+        # msg['Date'] = formatdate(localtime=True)
+        msg['Subject'] = settings.get('email', 'subject')
+
+        msg.attach(MIMEText(settings.get('email', 'body')))
+
+        collage = "IMG_{}_collage.png".format(start_time)
+        with open(collage, "rb") as fil:
+            part = MIMEApplication(
+                fil.read(),
+                Name="Photobooth_{}.png".format(start_time)
+            )
+            part['Content-Disposition'] = 'attachment; filename="%s"' % "Photobooth_{}.png".format(start_time)
+            msg.attach(part)
+
+        self.send_email(username, password, msg, emails)
+
+    def send_email(self, username, password, msg, emails):
+        start_time = photos[0].split("_")[1]
+
+        try:
+            server = smtplib.SMTP("smtp.gmail.com", 587)
+            try:
+                server.ehlo()
+                server.starttls()
+                server.login(username, password)
+                server.sendmail(msg['From'], msg['To'], msg.as_string())
+            finally:
+                server.close()
+        except:
+            email_file_name = "EMAILS_{}.txt".format(start_time)
+            with open(email_file_name, "w") as output:
+                output.write(str(emails))
+                output.write(traceback.format_exc().splitlines()[-1])
 
         del photos[:]
         sm.current = 'home'
