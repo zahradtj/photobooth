@@ -20,6 +20,7 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen, NoTransition
 from kivy.uix.settings import SettingsWithTabbedPanel
+from kivy.core.window import Window
 
 from settingsjson import settings_json
 from settings import SettingPassword, SettingFileChooser
@@ -36,7 +37,18 @@ base_width = 384
 
 
 class HomeScreen(Screen):
-    pass
+    def bind_settings(self):
+        Window.bind(on_key_up=self.KeyboardShortcut)
+
+    def KeyboardShortcut(self, window, key, *args):
+        if key == 115:
+            if self.ids.settings.disabled:
+                self.ids.settings.disabled = False
+                self.ids.settings.opacity = 1
+            else:
+                self.ids.settings.disabled = True
+                self.ids.settings.opacity = 0
+
 
 
 class PictureScreen(Screen):
@@ -244,10 +256,10 @@ class EmailScreen(Screen):
             content = ConfirmPopup(text='You have email addresses listed.\n\nSkip sending email?')
             content.bind(on_answer=self._on_answer)
             popup = Popup(title="Skip Email?",
-                               content=content,
-                               size_hint=(None, None),
-                               size=(480, 250),
-                               auto_dismiss=False)
+                          content=content,
+                          size_hint=(None, None),
+                          size=(480, 250),
+                          auto_dismiss=False)
             popup.open()
         else:
             del photos[:]

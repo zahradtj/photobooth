@@ -1,6 +1,8 @@
 #:kivy 1.10.0
 
 <HomeScreen>
+    on_enter:
+        root.bind_settings()
     RelativeLayout:
         orientation: 'vertical'
         canvas.before:
@@ -27,6 +29,8 @@
             size_hint: 0.5, 0.2
             pos_hint: { 'center_x': 0.5, 'center_y': 0.5 }
             height: "40dp"
+            opacity: 0
+            disabled: True
             on_press: app.open_settings()
 
 <PictureScreen>
