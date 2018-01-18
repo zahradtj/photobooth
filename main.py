@@ -34,9 +34,6 @@ sm = ScreenManager(transition=NoTransition())
 photos = []
 base_width = 384
 
-# printer = Adafruit_Thermal('/dev/ttyUSB0', 9600, timeout=5) # Linux
-# printer = Adafruit_Thermal('COM5', 9600, timeout=5) # Windows
-
 
 class HomeScreen(Screen):
     def bind_settings(self):
@@ -50,7 +47,6 @@ class HomeScreen(Screen):
             else:
                 self.ids.settings.disabled = True
                 self.ids.settings.opacity = 0
-
 
 
 class PictureScreen(Screen):
@@ -163,12 +159,11 @@ class PrintScreen(Screen):
 
     def print_collage(self):
         if printer is not None:
-            printer.begin(90)                               # Warmup time
-            printer.setTimes(40000, 3000)                   # Set print and feed times
-            printer.justify('C')                            # Center alignment
+            printer.wake()                                  # Bring printer out of low power state
             printer.feed(1)                                 # Add a blank line
             printer.printImage(self.print_picture, True)    # Specify image to print
             printer.feed(3)                                 # Add a few blank lines
+            printer.sleep()                                 # Send printer into low power state
         else:
             print('Printer not connected.')
             return
@@ -331,7 +326,15 @@ def connect_printer():
             printer = None
 
 
+def startup_printer():
+    printer.begin(90)               # Warmup time
+    printer.setTimes(40000, 3000)   # Set print and feed times
+    printer.justify('C')            # Center alignment
+    printer.sleep()                 # Put printer to low power state
+
+
 if __name__ == '__main__':
     connect_printer()
+    startup_printer()
 
     PhotoBoothApp().run()
