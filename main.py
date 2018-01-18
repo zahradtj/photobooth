@@ -5,6 +5,8 @@ import re
 import smtplib
 import traceback
 
+import sys
+
 from Adafruit_Thermal import Adafruit_Thermal
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -134,6 +136,14 @@ class PrintScreen(Screen):
         slider = self.ids['slider_id']
         slider.max = self.get_print_number()
 
+        if printer is None:
+            slider.disabled = True
+            slider.opacity = 0
+            self.ids['slider_text'].opacity = 0
+            self.ids['print_button'].disabled = True
+            self.ids['print_button'].opacity = 0
+            self.ids['copies_text'].text = 'Printer is not connected.  Please proceed to Email.'
+
     def scale_print_collage(self):
         image = self.ids['preview']
         collage_picture = Image.open(image.source)
@@ -146,17 +156,22 @@ class PrintScreen(Screen):
         print_filename = "IMG_{}_print.png".format(photos[0].split("_")[1])
         self.print_picture.save(print_filename)
 
-        for i in range(self.get_print_number()):
+        for i in range(int(self.ids['slider_id'].value)):
             self.print_collage()
 
+        sm.current = 'email'
+
     def print_collage(self):
-        # printer.begin(90)  # Warmup time
-        # printer.setTimes(40000, 3000)  # Set print and feed times
-        # printer.justify('C')  # Center alignment
-        # printer.feed(1)  # Add a blank line
-        # printer.printImage(self.print_picture, True)  # Specify image to print
-        # printer.feed(3)  # Add a few blank lines
-        pass
+        if printer is not None:
+            printer.begin(90)                               # Warmup time
+            printer.setTimes(40000, 3000)                   # Set print and feed times
+            printer.justify('C')                            # Center alignment
+            printer.feed(1)                                 # Add a blank line
+            printer.printImage(self.print_picture, True)    # Specify image to print
+            printer.feed(3)                                 # Add a few blank lines
+        else:
+            print('Printer not connected.')
+            return
 
     def get_print_number(self):
         settings_config.read('photobooth.ini')
@@ -302,5 +317,21 @@ class PhotoBoothApp(App):
         print(config, section, key, value)
 
 
+def connect_printer():
+    global printer
+    try:
+        printer = Adafruit_Thermal('/dev/ttyUSB0', 9600, timeout=5)  # Linux
+    except Exception as linux_exception:
+        try:
+            printer = Adafruit_Thermal('COM5', 9600, timeout=5)  # Windows
+        except Exception as windows_exception:
+            print(
+            'Failed to connect to printer.\n\nLinux Exception: {0}\n\nWindows Exception: {1}'.format(linux_exception,
+                                                                                                     windows_exception))
+            printer = None
+
+
 if __name__ == '__main__':
+    connect_printer()
+
     PhotoBoothApp().run()
